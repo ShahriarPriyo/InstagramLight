@@ -1,7 +1,8 @@
 let posts = [];
-
 const likedPostsId = [];
 const reportedPostsId = [];
+let remainingPosts;
+let reportCounter = 0;
 
 const getLikedPosts = () => {
   return posts.filter((post) => likedPostsId.includes(post.id));
@@ -16,19 +17,22 @@ const isLiked = (id) => {
 };
 
 const addToLiked = (id) => {
-  likedPostsId.push(id); //3rd bug fixed:line 19
-  showPosts(posts);
+  if (reportedPostsId.indexOf(id) === -1) {
+    likedPostsId.push(id);
+    reportCounter > 0 ? showPosts(remainingPosts) : showPosts(posts);
+
+  }
 };
 
 const reportPost = (id) => {
   reportedPostsId.push(id);
-  const remainingPosts = posts.filter((post) => !reportedPostsId.includes(post.id));
+  remainingPosts = posts.filter((post) => !reportedPostsId.includes(post.id));
   showPosts(remainingPosts);
+  reportCounter++;
 };
 
 const displayContent = (text) => {
   return text.length < 30 ? text : text.slice(0, 30) + "<span class='fw-bold'>... read more</span>";
-  //fourth bug fixed : line 30
 };
 
 const switchTab = (id) => {
@@ -36,6 +40,7 @@ const switchTab = (id) => {
     document.getElementById("posts").style.display = "grid";
     document.getElementById("liked").style.display = "none";
     document.getElementById("reported").style.display = "none";
+    document.getElementById("que-section").style.display = "block";
   } else if (id === "liked") {
     document.getElementById("liked").style.display = "block";
     document.getElementById("posts").style.display = "none";
@@ -53,7 +58,6 @@ const switchTab = (id) => {
 
 const createPost = (post) => {
   const image = post.image;
-  const userImage = post.userImage;      //first bug fixed
   const div = document.createElement("article");
   div.classList.add("post");
   div.innerHTML = `
@@ -64,7 +68,7 @@ const createPost = (post) => {
                     target="_blank"
                     class="post__avatar"
                   >
-                    <img src="${userImage}" alt="User Picture" />
+                    <img src="${post.userImage}" alt="User Picture" />
                   </a>
                   <a href="#" class="post__user">phero</a>
                 </div>
@@ -97,8 +101,7 @@ const createPost = (post) => {
 
                   <div class="post__indicators"></div>
 
-                  <button class="post__button post__button--align-right" onclick="reportPost(${post.id
-    })">
+                  <button class="post__button post__button--align-right" onclick="reportPost(${post.id})">
                     <i class="fa-solid fa-ban"></i>
                   </button>
                 </div>
@@ -108,7 +111,7 @@ const createPost = (post) => {
                 <div class="post__infos">
                   <div class="post__likes">
                     <a href="#" class="post__likes-avatar">
-                      <img src="${userImage}" alt="User Picture" />
+                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80" alt="User Picture" />
                     </a>
 
                     <span>Liked by
@@ -121,7 +124,7 @@ const createPost = (post) => {
                   <div class="post__description">
                     <small>
                       <a class="post__name--underline" href="#">
-                           ${post.comments[0]?.user} 
+                          ${post.comments[0]?.user}
                       </a>
                       ${post.comments[0]?.text}
                     </small>
@@ -131,14 +134,11 @@ const createPost = (post) => {
               </div>
       `;
   return div;
-
-  //second bug fixed line 123 and 125
 };
 
 const showPosts = (posts) => {
   const productsContainer = document.getElementById("posts");
   productsContainer.innerHTML = "";
-
   posts.forEach((post) => {
     const div = createPost(post);
     productsContainer.appendChild(div);
@@ -146,9 +146,9 @@ const showPosts = (posts) => {
 };
 
 const displayLikedPosts = () => {
-  document.getElementById('liked').innerHTML = ''; //final bug fixed:line 149 -> liked posts
+  document.getElementById("que-section").style.display = "none";
+  document.getElementById("liked").innerHTML = "";
   const likedPosts = getLikedPosts();
-
   likedPosts.forEach((post) => {
     const div = createPost(post);
     document.getElementById("liked").appendChild(div);
@@ -156,8 +156,9 @@ const displayLikedPosts = () => {
 };
 
 const displayReportedPosts = () => {
+  document.getElementById("que-section").style.display = "none";
+  document.getElementById("reported").innerHTML = "";
   const reportedPosts = getReportedPosts();
-  // 5th bug fixed:line 159
   reportedPosts.forEach((post) => {
     const div = createPost(post);
     document.getElementById("reported").appendChild(div);
@@ -165,9 +166,9 @@ const displayReportedPosts = () => {
 };
 
 const loadPosts = async () => {
-  let data = await fetch('../data/posts.json');
+  let data = await fetch("../data/posts.json");
   posts = await data.json();
   showPosts(posts);
-}
+};
 
 loadPosts();
